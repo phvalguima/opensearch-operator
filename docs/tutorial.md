@@ -1,4 +1,4 @@
-# Charmed OpenSearch Tutorial
+# Tutorial
 
 This tutorial is designed to help you learn how to deploy Charmed OpenSearch and become familiar with its available operations.
 
