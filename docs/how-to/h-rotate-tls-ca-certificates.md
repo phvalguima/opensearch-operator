@@ -24,7 +24,7 @@ Two scenarios trigger the rotation of TLS certificates:
 ### Manually rotate the TLS certificates
 You can manually start a rotation of the TLS certificates by changing the TLS private key for the type of certificate you want to rotate. 
 ```bash
-juju run-action opensearch/leader set-tls-private-key category=<category>
+juju run opensearch/leader set-tls-private-key category=<category>
 ```
 Where `<category>` is one of `app-admin`, `unit-transport`, or `unit-http`.
 
@@ -55,7 +55,7 @@ Until the rolling restart is complete, the OpenSearch cluster will ignore the ne
 As indicated in the ["Check certificates in use" section of How to enable TLS encryption](https://charmhub.io/opensearch/docs/h-enable-tls#check-certificates-in-use), you can check the certificates in use by running the following command:
 
 ```bash
-openssl s_client -showcerts -connect `leader_unit_IP:port` < /dev/null | grep issuer
+openssl s_client -showcerts -connect leader_unit_IP:port < /dev/null | grep issuer
 ```
 
 Where `leader_unit_IP` is the IP address of the leader unit and `port` is the port number of the OpenSearch service. This command will show the issuer of the certificate in use which should include the new CA certificate common name.
@@ -78,14 +78,17 @@ juju run manual-tls-certificates/leader provide-certificate \
   unit-name="<unit-name>"
 ```
 
-Once the new certificate is provided to the OpenSearch cluster, the OpenSearch cluster will automatically detect the new CA certificate and trigger a CA rotation on the node which results in new CSRs being generated. You can then sign the new CSRs using the new CA certificate and provide the new certificates to the OpenSearch node using the `manual-tls operator`.
+Once the new certificate is provided to the OpenSearch cluster, the OpenSearch cluster will automatically detect the new CA certificate and trigger a CA rotation on the node which results in new CSRs being generated. You can then sign the new CSRs using the new CA certificate and provide the new certificates to the OpenSearch node using the `manual-tls operator`. 
+[note  type="caution"]
+The distribution of certificates must follow a specific order. The leader unit is first followed by the remaining nodes.
+[/note]
 
 This process needs to be repeated for each unit in the OpenSearch cluster. Once all the units have the new CA certificate, the OpenSearch cluster will update the TLS certificates on the nodes, either by reloading them via API or by triggering a rolling restart of the OpenSearch cluster. Restarting to apply the new TLS certificates is only required if the issuer, the subject or the subject alternative names (sans) of the new certificate are different than before. If they stay the same, the new TLS certificates can be reloaded on the fly.
 
 As indicated in the ["Check certificates in use" section of How to enable TLS encryption](https://charmhub.io/opensearch/docs/h-enable-tls#check-certificates-in-use), you can check the certificates in use by running the following command:
 
 ```bash
-openssl s_client -showcerts -connect `leader_unit_IP:port` < /dev/null | grep issuer
+openssl s_client -showcerts -connect leader_unit_IP:port < /dev/null | grep issuer
 ```
 
 Where `leader_unit_IP` is the IP address of the leader unit and `port` is the port number of the OpenSearch service. This command will show the issuer of the certificate in use which should include the new CA certificate common name.
