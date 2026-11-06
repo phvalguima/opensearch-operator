@@ -6,6 +6,11 @@ This guide explains how to perform a minor upgrade of the OpenSearch cluster dep
 
 This guide will walk you through the steps to upgrade your OpenSearch cluster, including pre-upgrade checks, upgrading the OpenSearch cluster, preparing the application for the in-place upgrade, initiating the upgrade, resuming the upgrade, and checking the cluster's health.
 
+[note type="caution"]
+In large deployments, upgrades should follow a specific role-dependent order. **Upgrade all applications without the `cluster_manager` role first, then upgrade applications with the `cluster_manager` role.**
+The steps below describe upgrading a single application. In large deployments, repeat these steps for each application, following this order.
+[/note]
+
 ## Summary
   - [Pre-upgrade checks](#pre-upgrade-checks)
   - [Upgrade the OpenSearch cluster](#upgrade-the-opensearch-cluster)
@@ -23,7 +28,7 @@ This guide will walk you through the steps to upgrade your OpenSearch cluster, i
 ## Pre-upgrade checks
 Before upgrading your OpenSearch cluster, ensure that you have completed the following steps:
 
-1. **Backup your data**: Before upgrading, back up your data to prevent data loss in case of failure. For more information, see [Hot to create a backup](/t/14098).
+1. **Backup your data**: Before upgrading, back up your data to prevent data loss in case of failure. For more information, see [How to create a backup](/t/14098).
 2. **Make sure not to perform any extraordinary operations**: Avoid performing any concurrent operations on the cluster during the upgrade process. This can lead to an inconsistent state of the cluster. This includes:
     - Adding or removing units
     - Creating or destroying new relations
@@ -114,10 +119,25 @@ The action will ensure and check the health of OpenSearch and determine if the c
 
 ## Initiate the upgrade
 
+[note type="caution"]
+**Caution**: Charmed OpenSearch supports performance profiles and will have different RAM consumption according to the profile chosen:
+
+* `production`: consumes 50% of the RAM available, up to 32G
+* `staging`: consumes 25% of the RAM available, up to 32G
+* `testing`: consumes 1G of RAM
+
+In case your charm is running on revision prior to `185`, the `testing` profile will be your default value. Ensure you have it set at upgrade and then feel free to switch to another profile that is more suitable to your use-case.
+
+[/note]
+
 Use the juju refresh command to trigger the charm upgrade process. You have control over what upgrade you want to apply:
 - You can upgrade the charm to the latest revision available in the charm store for a specific channel, in this case, the edge channel:
 
     ```shell
+    # If your charm is running a revision prior to 185, then set the profile explicitly:
+    juju refresh opensearch --channel 2/edge --config profile="testing"
+
+    # Otherwise, just refresh
     juju refresh opensearch --channel 2/edge
     ```
 
